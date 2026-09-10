@@ -1,178 +1,99 @@
-"""
-Voice Assistant - Oasis Infobyte Python Internship
-Project 1: Voice Assistant
+# Voice Assistant Python
+# Developed as part of a Python internship.
 
-NO pyaudio needed! Uses sounddevice instead.
-
-Install with ONE command:
-    python -m pip install SpeechRecognition pyttsx3 sounddevice soundfile numpy
-
-Run:
-    python voice_assistant.py
-"""
-
-import datetime
-import webbrowser
-import sys
 import io
+import webbrowser
+from datetime import datetime
 
-import pyttsx3
-import speech_recognition as sr
-import sounddevice as sd
 import numpy as np
+import pyttsx3
+import sounddevice as sd
 import soundfile as sf
+import speech_recognition as sr
 
+SAMPLE_RATE = 16_000
+RECORD_SECONDS = 6
 
-# ── TTS Engine ────────────────────────────────────────────────────────────────
 engine = pyttsx3.init()
-engine.setProperty("rate", 155)
-engine.setProperty("volume", 1.0)
-voices = engine.getProperty("voices")
-if len(voices) > 1:
-    engine.setProperty("voice", voices[1].id)
+recognizer = sr.Recognizer()
 
 
 def speak(text: str) -> None:
-    print(f"\n🤖 Assistant: {text}")
+    """Convert text into spoken output."""
+    print(f"Assistant: {text}")
     engine.say(text)
     engine.runAndWait()
 
 
-# ── Mic recording (sounddevice — no pyaudio needed) ───────────────────────────
-SAMPLE_RATE = 16000
-RECORD_SECONDS = 6
-
-
-def record_audio() -> bytes:
-    """Record from mic and return WAV bytes."""
-    print("\n🎤 Listening... (speak now)")
-    recording = sd.rec(
-        int(RECORD_SECONDS * SAMPLE_RATE),
-        samplerate=SAMPLE_RATE,
-        channels=1,
-        dtype="int16"
-    )
-    sd.wait()
-    buf = io.BytesIO()
-    sf.write(buf, recording, SAMPLE_RATE, format="WAV", subtype="PCM_16")
-    buf.seek(0)
-    return buf.read()
-
-
 def listen() -> str:
-    """Record voice and return recognized text in lowercase."""
-    recognizer = sr.Recognizer()
+    """Record microphone audio and convert it to text."""
     try:
-        wav_data = record_audio()
-        audio = sr.AudioData(wav_data, SAMPLE_RATE, 2)
-        command = recognizer.recognize_google(audio)
-        print(f"👤 You said: {command}")
-        return command.lower()
+        print("Listening...")
+        audio_data = sd.rec(
+            int(RECORD_SECONDS * SAMPLE_RATE),
+            samplerate=SAMPLE_RATE,
+            channels=1,
+            dtype="float32",
+        )
+        sd.wait()
+
+        buffer = io.BytesIO()
+        sf.write(buffer, np.squeeze(audio_data), SAMPLE_RATE, format="WAV")
+        buffer.seek(0)
+
+        with sr.AudioFile(buffer) as source:
+            audio = recognizer.record(source)
+
+        command = recognizer.recognize_google(audio).lower().strip()
+        print(f"You: {command}")
+        return command
     except sr.UnknownValueError:
-        speak("Sorry, I didn't catch that. Please try again.")
-        return ""
+        speak("Sorry, I could not understand that.")
     except sr.RequestError:
-        speak("Speech service unavailable. Check your internet.")
-        return ""
-    except Exception as e:
-        print(f"[Error] {e}")
-        return ""
+        speak("Speech recognition service is unavailable right now.")
+    except Exception as exc:
+        print(f"Audio error: {exc}")
+        speak("I could not access the microphone correctly.")
+    return ""
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-def get_time() -> str:
-    return datetime.datetime.now().strftime("It is %I:%M %p")
-
-
-def get_date() -> str:
-    return datetime.date.today().strftime("Today is %A, %B %d, %Y")
-
-
-def search_web(query: str) -> None:
-    url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
-    webbrowser.open(url)
-    speak(f"Here are the search results for: {query}")
-
-
-# ── Command processor ─────────────────────────────────────────────────────────
-def process_command(command: str) -> bool:
+def handle_command(command: str) -> bool:
+    """Handle a recognized command. Return False when the assistant should exit."""
     if not command:
         return True
 
-    if any(w in command for w in ["hello", "hi", "hey", "howdy"]):
-        speak("Hello! I'm your voice assistant. How can I help you?")
-
-    elif any(p in command for p in ["what time", "current time", "tell me the time"]):
-        speak(get_time())
-
-    elif any(p in command for p in ["what date", "today's date", "what day", "current date"]):
-        speak(get_date())
-
-    elif "time and date" in command or "date and time" in command:
-        speak(get_time() + ". And " + get_date())
-
-    elif any(p in command for p in ["who are you", "your name", "what are you"]):
-        speak("I am your personal voice assistant, built with Python for Oasis Infobyte!")
-
-    elif "how are you" in command:
-        speak("I'm doing great, thank you for asking!")
-
-    elif any(w in command for w in ["thank you", "thanks"]):
-        speak("You're welcome! Anything else?")
-
-    elif "help" in command or "what can you do" in command:
-        speak(
-            "I can tell you the time, the date, "
-            "search the web, open YouTube or Google, "
-            "and have a basic conversation. "
-            "Say search for followed by your topic to search the web."
-        )
-
-    elif any(kw in command for kw in ["search for", "look up", "search"]):
-        query = ""
-        for kw in ["search for", "look up", "search"]:
-            if kw in command:
-                query = command.split(kw, 1)[-1].strip()
-                break
-        if query:
-            search_web(query)
-        else:
-            speak("What would you like me to search for?")
-
-    elif "open youtube" in command:
+    if "time" in command:
+        speak(datetime.now().strftime("The time is %I:%M %p"))
+    elif "date" in command:
+        speak(datetime.now().strftime("Today is %A, %B %d, %Y"))
+    elif "youtube" in command:
         webbrowser.open("https://www.youtube.com")
         speak("Opening YouTube.")
-
-    elif "open google" in command:
+    elif "google" in command:
         webbrowser.open("https://www.google.com")
         speak("Opening Google.")
-
-    elif any(w in command for w in ["exit", "quit", "bye", "goodbye", "stop"]):
-        speak("Goodbye! Have a great day!")
+    elif command.startswith("search ") or "search for " in command:
+        query = command.replace("search for ", "", 1).replace("search ", "", 1).strip()
+        if query:
+            webbrowser.open(f"https://www.google.com/search?q={query.replace(' ', '+')}")
+            speak(f"Searching for {query}.")
+    elif any(greeting in command for greeting in ("hello", "hi", "hey")):
+        speak("Hello! How can I help you?")
+    elif "help" in command:
+        speak("You can ask for the time, date, open Google or YouTube, search the web, or say exit.")
+    elif any(word in command for word in ("exit", "quit", "stop", "goodbye")):
+        speak("Goodbye!")
         return False
-
     else:
-        speak(f"I heard: {command}. I'm not sure about that. Say help for options.")
-
+        speak("I do not know that command yet. Say help to see what I can do.")
     return True
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
-def main():
-    print("=" * 52)
-    print("   🎙️  VOICE ASSISTANT  |  Oasis Infobyte")
-    print("=" * 52)
-    print("Say: time, date, search for <topic>,")
-    print("     open youtube, open google, help, exit\n")
-
-    speak("Hello! I'm your voice assistant. Say help to hear what I can do.")
-
-    running = True
-    while running:
-        command = listen()
-        running = process_command(command)
-
-    sys.exit(0)
+def main() -> None:
+    speak("Voice assistant started. Say help for available commands.")
+    while True:
+        if not handle_command(listen()):
+            break
 
 
 if __name__ == "__main__":
