@@ -109,5 +109,5 @@ voice-assistant-python/
 
 ## 👩‍💻 Author
 
-**Nomitha Reddy**  
+**THURPU CHINNABBA REDDY NOMITHA**  
 Python | AI & Machine Learning | Data Science
