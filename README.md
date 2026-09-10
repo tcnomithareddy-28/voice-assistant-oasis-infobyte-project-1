@@ -1,10 +1,13 @@
 # 🎙️ Voice Assistant Python
 
-A beginner-friendly **Python voice assistant** that listens to spoken commands, converts speech to text, performs useful actions, and responds using text-to-speech.
+A beginner-friendly **Python voice assistant** developed as **Oasis Infobyte Python Internship — Project 1**. The application listens to spoken commands, converts speech to text, performs useful actions, and responds using text-to-speech.
 
-## 🎯 Project Overview
+## 🎓 Oasis Infobyte Internship — Project 1
 
-This project demonstrates how Python can combine **speech recognition, audio processing, text-to-speech, and web automation** to build an interactive desktop voice assistant.
+**Project:** Voice Assistant  
+**Internship:** Python Programming Internship — Oasis Infobyte
+
+This project demonstrates practical Python programming through speech recognition, audio processing, text-to-speech, command handling, and web automation.
 
 ## ✨ Features
 
@@ -42,6 +45,7 @@ Text-to-Speech
 - **SoundDevice** — audio recording
 - **SoundFile** — WAV audio handling
 - **NumPy** — audio data processing
+- **Web Browser** — web automation
 
 ## 📚 Skills Demonstrated
 
@@ -49,7 +53,7 @@ Text-to-Speech
 - Speech recognition integration
 - Audio recording and processing
 - Text-to-speech systems
-- API/service integration
+- Service/API integration
 - Exception handling
 - User input and command processing
 
@@ -83,7 +87,7 @@ source venv/bin/activate
 ### 3. Install dependencies
 
 ```bash
-pip install SpeechRecognition pyttsx3 sounddevice soundfile numpy
+pip install -r requirements.txt
 ```
 
 ### 4. Run the assistant
@@ -99,15 +103,11 @@ python voice_assistant.py
 ```text
 voice-assistant-python/
 ├── voice_assistant.py
+├── requirements.txt
 └── README.md
 ```
 
-## 🎓 Internship Project
-
-This project was developed as part of a **Python internship**, with a focus on applying Python programming concepts to a practical voice-based application.
-
 ## 👩‍💻 Author
 
-**Nomitha Reddy**
-
+**Nomitha Reddy**  
 Python | AI & Machine Learning | Data Science
